@@ -25,7 +25,6 @@ func NewGolState(world World, rules Rules) GoLState {
 			currentPosition: rl.Vector2{},
 		},
 	}
-
 	goLState.camera2d.Target.X = 0
 	goLState.camera2d.Target.Y = 0
 	goLState.camera2d.Zoom = 10
@@ -37,10 +36,10 @@ func (state *GoLState) UpdateWorld() {
 }
 
 type DragInfo struct {
-	enabled bool
-	started bool
-	done bool
-	startPosition rl.Vector2
+	enabled         bool
+	started         bool
+	done            bool
+	startPosition   rl.Vector2
 	currentPosition rl.Vector2
 }
 
@@ -53,7 +52,6 @@ type GoLState struct {
 	targetBackup     rl.Vector2
 	rules            Rules
 	dragInfo         DragInfo
-
 }
 
 func (state *GoLState) ToggleWorldUpdate() {
@@ -97,12 +95,12 @@ func (state *GoLState) HandleMouseZoom() {
 		return
 	}
 
-	mousePosition := rl.GetScreenToWorld2D(rl.GetMousePosition(),state.camera2d)
+	mousePosition := rl.GetScreenToWorld2D(rl.GetMousePosition(), state.camera2d)
 	zoomFactor := float32(math.Pow(ZOOM_FACTOR, float64(wheelMove)))
 
 	state.camera2d.Zoom *= zoomFactor
-	state.camera2d.Target.X -= (mousePosition.X - state.camera2d.Target.X)*(1-zoomFactor)
-	state.camera2d.Target.Y -= (mousePosition.Y - state.camera2d.Target.Y)*(1-zoomFactor)
+	state.camera2d.Target.X -= (mousePosition.X - state.camera2d.Target.X) * (1 - zoomFactor)
+	state.camera2d.Target.Y -= (mousePosition.Y - state.camera2d.Target.Y) * (1 - zoomFactor)
 
 }
 
@@ -114,8 +112,8 @@ func (state *GoLState) HandleMouseDrag() {
 	}
 
 	if state.dragInfo.enabled {
-		start := rl.GetScreenToWorld2D(state.dragInfo.startPosition,state.camera2d)
-		current := rl.GetScreenToWorld2D(state.dragInfo.currentPosition,state.camera2d)
+		start := rl.GetScreenToWorld2D(state.dragInfo.startPosition, state.camera2d)
+		current := rl.GetScreenToWorld2D(state.dragInfo.currentPosition, state.camera2d)
 
 		state.camera2d.Target.X = state.targetBackup.X - current.X + start.X
 		state.camera2d.Target.Y = state.targetBackup.Y - current.Y + start.Y
@@ -134,6 +132,9 @@ func (state *GoLState) HandleKeys() {
 	}
 	if rl.IsKeyReleased(rl.KeyDown) {
 		state.DecreaseUpdateSpeed()
+	}
+	if rl.IsKeyPressed(rl.KeyHome) {
+		state.ResetZoom()
 	}
 }
 
@@ -159,22 +160,27 @@ func (state *GoLState) HandleMouseClick() {
 		return
 	}
 
-	position := rl.GetScreenToWorld2D(rl.GetMousePosition(),state.camera2d)
+	position := rl.GetScreenToWorld2D(rl.GetMousePosition(), state.camera2d)
 	x := int32(position.X)
 	y := int32(position.Y)
 
-	fmt.Printf("%v %v %v\n",x,y, leftDown)
+	fmt.Printf("%v %v %v\n", x, y, leftDown)
 
-	state.world.SetState(x,y,leftDown)
+	state.world.SetState(x, y, leftDown)
 
 }
 
+func (state *GoLState) ResetZoom() {
+
+	state.camera2d.Zoom = state.world.EstimateZoom(rl.GetScreenWidth(), rl.GetScreenHeight())
+
+}
 
 func (dragInfo *DragInfo) Update(button int32) {
 
 	dragInfo.started = rl.IsMouseButtonPressed(button)
 	dragInfo.done = rl.IsMouseButtonReleased(button)
-	dragInfo.enabled =  rl.IsMouseButtonDown(button)
+	dragInfo.enabled = rl.IsMouseButtonDown(button)
 
 	if dragInfo.started {
 		dragInfo.startPosition = rl.GetMousePosition()
