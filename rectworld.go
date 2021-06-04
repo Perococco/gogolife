@@ -25,14 +25,37 @@ func NewRectWorld(width, height int32) *RectWorld {
 	}
 }
 
-func (world *RectWorld) Update(rules Rules) {
-	for w := int32(0); w < world.width; w++ {
-		for h := int32(0); h < world.height; h++ {
-			nbNeighbours := world.NeighbourCount(w, h)
-			newState := rules.StateEstimate(nbNeighbours, world.StateGet(w, h))
-			world.SetNewState(w, h, newState)
+const NB_WORKERS = 10
+
+func (world *RectWorld) UpdateRow(rules Rules, w, h int32) {
+	nbNeighbours := world.NeighbourCount(w, h)
+	newState := rules.StateEstimate(nbNeighbours, world.StateGet(w, h))
+	world.SetNewState(w, h, newState)
+}
+
+func (world *RectWorld) UpdateAsync(rules Rules, workerIndex int32, channel chan int32) {
+	for h := workerIndex;h < world.height;h+=NB_WORKERS {
+		for w := int32(0); w < world.width; w++ {
+			world.UpdateRow(rules, w,h)
 		}
 	}
+	channel <- 1
+}
+
+func (world *RectWorld) Update(rules Rules) {
+
+	channel := make(chan int32)
+
+	nbDone := int32(0)
+
+	for workerIndex := int32(0); workerIndex < NB_WORKERS; workerIndex++ {
+		go world.UpdateAsync(rules,workerIndex, channel)
+	}
+
+	for nbDone < NB_WORKERS {
+		nbDone += <-channel
+	}
+
 	world.SwapStates()
 }
 

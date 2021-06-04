@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"math"
 )
@@ -163,8 +162,6 @@ func (state *GoLState) HandleMouseClick() {
 	position := rl.GetScreenToWorld2D(rl.GetMousePosition(), state.camera2d)
 	x := int32(position.X)
 	y := int32(position.Y)
-
-	fmt.Printf("%v %v %v\n", x, y, leftDown)
 
 	state.world.SetState(x, y, leftDown)
 
